@@ -1,0 +1,49 @@
+
+1. Creating a table
+create table xml_book_table(col1 string);
+
+2. loading data
+load data local inpath 'books.xml' into table xml_book_table;
+
+3. listing all
+Select * From xml_book_table;
+
+4. Describing table
+DESC xml_book_table;
+
+5.Creating new table
+ create table book_xml(author string,
+       title string,
+       genre string,
+       price double,
+       discount double,
+       publish_date date,
+       description string)
+       row format delimited
+       fields terminated by '|';
+
+6. overwriting data
+insert overwrite table book_xml 
+       select xpath_string(col1, 'book/author'),
+       xpath_string(col1 , 'book/title/text()'),
+       xpath_string(col1 , 'book/genre/text()'),
+       xpath_string(col1 , 'book/price/text()'),
+       xpath_string(col1 , 'book/price/@discount'),
+       xpath_string(col1 , 'book/publish_date/text()'),
+       xpath_string(col1 , 'book/description/text()') 
+       from xml_book_table;
+7. Printing all data
+select * from book_xml;
+
+		QUERIES
+
+8. Query 1: List all authors
+select author from book_xml;
+
+9. Query 2: Selecting Title and price of book whose price
+   is greater than 40.
+select title, price from book_xml where price > 40;
+
+10.  Query 3: selecting book author, title, genre from book_xml
+      which genre is 'Fantasy'
+ select author, title,genre from book_xml where genre=='Fantasy';
