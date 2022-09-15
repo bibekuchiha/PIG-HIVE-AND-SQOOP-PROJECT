@@ -1,0 +1,191 @@
+	Data Technology Solutions       
+            Group E
+
+	Bibek Shah Shankhar
+	Davinderjit Singh
+	Kirandeep Kaur
+	Kamaldeep kaur Dhami
+	Anirudh Siddula	
+
+TASK 1: PIG
+
+Project Title : Country Project
+
+A. Count number of countries based on landmass
+flag_data = LOAD '/user/bibek/flag_project/flag.data' USING PigStorage(',') as (name:chararray, landmass:int, zone:int, area:chararray, population:chararray, language:int, religion:int, bars:int, stripes:int, colours:int, red:int, green:int, blue:int, gold:int, white:int, black:int, orange:int, mainhue:chararray, circles:int, crosses:int, saltires:int, quarters:int, sunstars:int, crescent:int, triangle:int, icon:int, animate:int, text:int, topleft:chararray, botright:chararray); 
+
+grouped_data = GROUP flag_data by landmass; 
+
+count_data = FOREACH grouped_data GENERATE group,COUNT(flag_data);
+
+DUMP count_data;
+
+B. Find out top 5 countries with sum of bars and strips in a flag
+
+foreach_data = FOREACH flag_data GENERATE name,$7+$8;
+grouped_data = GROUP foreach_data All;
+bar_data = FOREACH grouped_data {        
+ord = ORDER foreach_data BY $1 DESC;    
+top = LIMIT ord 5;
+GENERATE FLATTEN(top);
+};
+DUMP bar_data;
+
+C. Count of countries with icon
+
+filter_icon_data = FILTER flag_data BY icon == 1;    
+group_icon_data = GROUP filter_icon_data BY icon; 
+count_icon_data = FOREACH group_icon_data GENERATE group, COUNT(filter_icon_data);
+DUMP count_icon_data;
+
+
+D. Count of countries which have same top left and top right color in flag
+
+filtered_flag_data = FILTER flag_data BY $28 == $29;
+group_flag_data = GROUP filtered_flag_data All;
+count_flag_data = FOREACH group_flag_data GENERATE group, COUNT(filtered_flag_data);
+DUMP count_flag_data;
+
+E. Count number of countries based on zone
+
+group_zone_data = GROUP flag_data by zone;
+count_zone_data = FOREACH group_zone_data GENERATE group,COUNT(flag_data);
+DUMP count_zone_data;
+
+
+F. Find out largest country in terms of area in NE zone
+
+filter_NE_data = FILTER flag_data BY zone == 1;    
+group_NE_data = GROUP filter_NE_data All; 
+max_area_data = FOREACH group_NE_data {
+ord = ORDER filter_NE_data BY $3 DESC; 
+top = LIMIT ord 1;
+GENERATE FLATTEN(top);
+};
+
+max_area_country = FOREACH max_area_data GENERATE name,area;
+DUMP max_area_country; 
+
+G. Find out least populated country in S.America landmass
+
+filter_SA_data = FILTER flag_data BY landmass == 2;    
+group_SA_data = GROUP filter_SA_data All; 
+least_population_data = FOREACH group_SA_data {
+ord = ORDER filter_SA_data BY $4 ASC; 
+top = LIMIT ord 1;
+GENERATE FLATTEN(top);
+};
+least_population_country = FOREACH least_population_data GENERATE name,population;
+DUMP least_population_country;
+
+H. Find out largest speaking language among all countries
+
+foreach_data = FOREACH flag_data GENERATE name,language;
+group_data = GROUP foreach_data BY language;
+count_data = FOREACH group_data GENERATE group,(int)COUNT(foreach_data); 
+group_count_data = GROUP count_data All;
+largest_speaking_language = FOREACH group_count_data {          
+ord = ORDER count_data BY $1 DESC;    
+top = LIMIT ord 1;
+GENERATE FLATTEN(top);
+};
+DUMP largest_speaking_language
+
+I. Find most common color among flags from all countries
+
+grouped_data = GROUP flag_data All;
+common_color_data = FOREACH grouped_data GENERATE group,SUM(flag_data.$10),SUM(flag_data.$11),SUM(flag_data.$12),SUM(flag_data.$13),SUM(flag_data.$14),SUM(flag_data.$15),SUM(flag_data.$16);
+dump common_color_data;
+
+J. Sum of all circles present in all country flags.
+
+grouped_circle_data = GROUP flag_data All; 
+sum_circle = FOREACH grouped_circle_data GENERATE group,SUM(flag_data.circles);
+dump sum_circle;  
+
+
+
+TASK 2 -  HIVE Commands
+
+
+1. Creating a table
+create table xml_book_table(col1 string);
+
+2. loading data
+load data local inpath 'books.xml' into table xml_book_table;
+
+3. listing all
+Select * From xml_book_table;
+
+4. Describing table
+DESC xml_book_table;
+
+5.Creating new table
+ create table book_xml(author string,
+       title string,
+       genre string,
+       price double,
+       discount double,
+       publish_date date,
+       description string)
+       row format delimited
+       fields terminated by '|';
+
+6. overwriting data
+insert overwrite table book_xml 
+       select xpath_string(col1, 'book/author'),
+       xpath_string(col1 , 'book/title/text()'),
+       xpath_string(col1 , 'book/genre/text()'),
+       xpath_string(col1 , 'book/price/text()'),
+       xpath_string(col1 , 'book/price/@discount'),
+       xpath_string(col1 , 'book/publish_date/text()'),
+       xpath_string(col1 , 'book/description/text()') 
+       from xml_book_table;
+7. Printing all data
+select * from book_xml;
+
+		QUERIES
+
+8. Query 1: List all authors
+select author from book_xml;
+
+9. Query 2: Selecting Title and price of book whose price
+   is greater than 40.
+select title, price from book_xml where price > 40;
+
+10.  Query 3: selecting book author, title, genre from book_xml
+      which genre is 'Fantasy'
+ select author, title,genre from book_xml where genre=='Fantasy';
+
+
+
+TASK 3 - SQOOP COMMANDS
+
+	Part A
+
+1. Creating data base 
+create database books;
+
+2. Creating table in mysql
+ create table books_xml_export (author varchar(60),
+    -> title varchar(60),
+    -> genre varchar(60),
+    -> price float,
+    -> discount float,
+    -> publish_date date,
+    -> description varchar(200));
+
+
+3. Exporting data from hive to mysql
+sqoop export --connect jdbc:mysql://localhost:3306/books --username root --password hadoop --table books_xml_export --input-fields-terminated-by '|' --export-dir /home/hadoop/work/warehouse/book_xml
+
+	Part B (queries)
+
+1. To display all author
+sqoop import --connect jdbc:mysql://localhost:3306/books --username root --password hadoop  --query "SELECT author FROM books_xml_export where \$CONDITIONS" --split-by author --target-dir /dav/books_query1
+
+2 To display book,title, genre where genre is equal to Horror
+sqoop import --connect jdbc:mysql://localhost:3306/books --username root --password hadoop  --query "SELECT author, title, genre from books_xml_export where genre= 'Horror' AND \$CONDITIONS" --split-by title --target-dir /dav/books_query2
+
+3 Selecting Title and price where price is less than 40
+sqoop import --connect jdbc:mysql://localhost:3306/books --username root --password hadoop  --query "SELECT title, price from books_xml_export where price < 40  AND \$CONDITIONS" --split-by title --target-dir /dav/books_query3
