@@ -1,0 +1,28 @@
+	Part A
+
+1. Creating data base 
+create database books;
+
+2. Creating table in mysql
+ create table books_xml_export (author varchar(60),
+    -> title varchar(60),
+    -> genre varchar(60),
+    -> price float,
+    -> discount float,
+    -> publish_date date,
+    -> description varchar(200));
+
+
+3. Exporting data from hive to mysql
+sqoop export --connect jdbc:mysql://localhost:3306/books --username root --password hadoop --table books_xml_export --input-fields-terminated-by '|' --export-dir /home/hadoop/work/warehouse/book_xml
+
+	Part B (queries)
+
+1. To display all author
+sqoop import --connect jdbc:mysql://localhost:3306/books --username root --password hadoop  --query "SELECT author FROM books_xml_export where \$CONDITIONS" --split-by author --target-dir /dav/books_query1
+
+2 To display book,title, genre where genre is equal to Horror
+sqoop import --connect jdbc:mysql://localhost:3306/books --username root --password hadoop  --query "SELECT author, title, genre from books_xml_export where genre= 'Horror' AND \$CONDITIONS" --split-by title --target-dir /dav/books_query2
+
+3 Selecting Title and price where price is less than 40
+sqoop import --connect jdbc:mysql://localhost:3306/books --username root --password hadoop  --query "SELECT title, price from books_xml_export where price < 40  AND \$CONDITIONS" --split-by title --target-dir /dav/books_query3
